@@ -11,7 +11,7 @@
 @end
 
 @interface SBLockHardwareButtonActions
-- (void)performSinglePressUpActions;
+- (void)performFinalButtonUpActions;
 @end
 
 static BOOL flashlightEnabled = NO;
@@ -35,13 +35,13 @@ static void TogglePlayback(void) {
     [[%c(SBMediaController) sharedInstance] togglePlayPause];
 }
 
-// SpringBoard calls this for every completed short lock-button press.  Delay
-// execution briefly so two and three consecutive presses can be distinguished.
+// On iOS 15 this is reached after every completed short side-button press,
+// including the presses that form a double- or triple-click gesture.
 static void RecordLockButtonClick(void) {
     lockClickCount += 1;
     const NSUInteger generation = ++lockClickGeneration;
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.55 * NSEC_PER_SEC)),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.70 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         if (generation != lockClickGeneration) {
             return;
@@ -60,7 +60,7 @@ static void RecordLockButtonClick(void) {
 
 %hook SBLockHardwareButtonActions
 
-- (void)performSinglePressUpActions {
+- (void)performFinalButtonUpActions {
     %orig;
     RecordLockButtonClick();
 }
