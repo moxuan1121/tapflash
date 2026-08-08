@@ -1,15 +1,6 @@
 #include <Foundation/Foundation.h>
 #include <UIKit/UIKit.h>
-
-@interface SBUIFlashlightController
-+ (instancetype)sharedInstance;
-- (void)toggleFlashlight;
-@end
-
-@interface SBMediaController
-+ (instancetype)sharedInstance;
-- (void)togglePlayPause;
-@end
+#include <objc/message.h>
 
 @interface SBLockHardwareButtonActions
 - (void)performInitialButtonDownActions;
@@ -18,12 +9,32 @@
 static NSUInteger lockClickCount = 0;
 static NSUInteger lockClickGeneration = 0;
 
+static id SharedController(NSString *className) {
+    Class controllerClass = NSClassFromString(className);
+    SEL sharedInstance = NSSelectorFromString(@"sharedInstance");
+
+    if (!controllerClass || ![(id)controllerClass respondsToSelector:sharedInstance]) {
+        return nil;
+    }
+
+    return ((id (*)(id, SEL))objc_msgSend)((id)controllerClass, sharedInstance);
+}
+
+static void SendNoArgumentAction(id target, NSString *selectorName) {
+    SEL selector = NSSelectorFromString(selectorName);
+    if (target && [target respondsToSelector:selector]) {
+        ((void (*)(id, SEL))objc_msgSend)(target, selector);
+    }
+}
+
 static void ToggleFlashlight(void) {
-    [[%c(SBUIFlashlightController) sharedInstance] toggleFlashlight];
+    SendNoArgumentAction(SharedController(@"SBUIFlashlightController"),
+                         @"toggleFlashlight");
 }
 
 static void TogglePlayback(void) {
-    [[%c(SBMediaController) sharedInstance] togglePlayPause];
+    SendNoArgumentAction(SharedController(@"SBMediaController"),
+                         @"togglePlayPause");
 }
 
 // iOS 15 invokes this once for every physical side-button press, before the
