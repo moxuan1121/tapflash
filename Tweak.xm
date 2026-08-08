@@ -1,8 +1,9 @@
 #include <Foundation/Foundation.h>
 #include <UIKit/UIKit.h>
 
-@interface AVFlashlight
-- (BOOL)setFlashlightLevel:(float)level withError:(NSError **)error;
+@interface SBUIFlashlightController
++ (instancetype)sharedInstance;
+- (void)toggleFlashlight;
 @end
 
 @interface SBMediaController
@@ -11,33 +12,23 @@
 @end
 
 @interface SBLockHardwareButtonActions
-- (void)performFinalButtonUpActions;
+- (void)performInitialButtonDownActions;
 @end
 
-static BOOL flashlightEnabled = NO;
 static NSUInteger lockClickCount = 0;
 static NSUInteger lockClickGeneration = 0;
 
 static void ToggleFlashlight(void) {
-    static AVFlashlight *flashlight;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        flashlight = [[%c(AVFlashlight) alloc] init];
-    });
-
-    const float level = flashlightEnabled ? 0.0f : 1.0f;
-    if ([flashlight setFlashlightLevel:level withError:nil]) {
-        flashlightEnabled = !flashlightEnabled;
-    }
+    [[%c(SBUIFlashlightController) sharedInstance] toggleFlashlight];
 }
 
 static void TogglePlayback(void) {
     [[%c(SBMediaController) sharedInstance] togglePlayPause];
 }
 
-// On iOS 15 this is reached after every completed short side-button press,
-// including the presses that form a double- or triple-click gesture.
-static void RecordLockButtonClick(void) {
+// iOS 15 invokes this once for every physical side-button press, before the
+// system resolves whether the sequence is a single, double, or triple click.
+static void RecordLockButtonPress(void) {
     lockClickCount += 1;
     const NSUInteger generation = ++lockClickGeneration;
 
@@ -60,9 +51,9 @@ static void RecordLockButtonClick(void) {
 
 %hook SBLockHardwareButtonActions
 
-- (void)performFinalButtonUpActions {
+- (void)performInitialButtonDownActions {
     %orig;
-    RecordLockButtonClick();
+    RecordLockButtonPress();
 }
 
 %end
