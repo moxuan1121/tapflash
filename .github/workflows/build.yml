@@ -12,15 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install RootHide Theos
+      - name: Install RootHide Theos, toolchain, and SDK
         env:
           CI: "true"
           THEOS: ${{ github.workspace }}/theos
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential fakeroot rsync curl perl zip git libxml2
-          git clone --recursive https://github.com/roothide/theos.git "$THEOS"
-          "$THEOS/bin/install-sdk" latest
+        run: bash -c "$(curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos)"
 
       - name: Build RootHide package
         env:
