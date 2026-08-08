@@ -1,5 +1,6 @@
 # TapFlash — RootHide edition
 
-Press the iPhone lock button three times in quick succession to toggle the flashlight.
+- Double-click the iPhone lock button: play/pause media.
+- Triple-click the iPhone lock button: toggle the flashlight.
 
-This package is compiled specifically for RootHide arm64e devices. It replaces SpringBoard's normal triple-click action.
+This package is compiled specifically for RootHide arm64e devices. Regular single clicks retain their normal SpringBoard behavior.
