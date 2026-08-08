@@ -1,0 +1,35 @@
+name: Build RootHide arm64e package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install RootHide Theos
+        env:
+          CI: "true"
+          THEOS: ${{ github.workspace }}/theos
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential fakeroot rsync curl perl zip git libxml2
+          git clone --recursive https://github.com/roothide/theos.git "$THEOS"
+          "$THEOS/bin/install-sdk" latest
+
+      - name: Build RootHide package
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=roothide
+
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v4
+        with:
+          name: tapflash-roothide-arm64e
+          path: packages/*.deb
+          if-no-files-found: error
