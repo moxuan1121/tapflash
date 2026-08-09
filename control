@@ -1,8 +1,8 @@
 Package: com.chr1s.tapflash
 Name: TapFlash
-Version: 2.3.0-roothide
+Version: 3.0.0-roothide
 Architecture: iphoneos-arm64e
-Description: Delayed triple-click flashlight test for iOS 15 RootHide; double-click gives haptic feedback.
+Description: Double-click play/pause and triple-click flashlight through a RootHide helper service.
 Maintainer: Chr1s
 Author: Chr1s
 Section: Tweaks
