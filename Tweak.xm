@@ -1,44 +1,12 @@
 #include <Foundation/Foundation.h>
 #include <UIKit/UIKit.h>
-#include <objc/message.h>
+#include <notify.h>
 
 static NSUInteger lockClickCount = 0;
 static NSUInteger lockClickGeneration = 0;
 
-static void PlayDiagnosticFeedback(void) {
-    UIImpactFeedbackGenerator *generator =
-        [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
-    [generator prepare];
-    [generator impactOccurred];
-}
-
-static void ToggleFlashlight(void) {
-    @try {
-        Class controllerClass = NSClassFromString(@"SBUIFlashlightController");
-        SEL sharedInstance = NSSelectorFromString(@"sharedInstance");
-        SEL level = NSSelectorFromString(@"level");
-        SEL setLevel = NSSelectorFromString(@"setLevel:");
-
-        if (!controllerClass ||
-            ![(id)controllerClass respondsToSelector:sharedInstance]) {
-            return;
-        }
-
-        id controller = ((id (*)(id, SEL))objc_msgSend)((id)controllerClass, sharedInstance);
-        if (!controller ||
-            ![controller respondsToSelector:level] ||
-            ![controller respondsToSelector:setLevel]) {
-            return;
-        }
-
-        const NSInteger currentLevel =
-            ((NSInteger (*)(id, SEL))objc_msgSend)(controller, level);
-        const NSInteger newLevel = currentLevel == 0 ? 1 : 0;
-
-        ((void (*)(id, SEL, NSInteger))objc_msgSend)(controller, setLevel, newLevel);
-    } @catch (NSException *exception) {
-        // The selectors were verified on the target iOS 15.6 device.
-    }
+static void PostTapFlashAction(const char *notificationName) {
+    notify_post(notificationName);
 }
 
 static void RecordSideButtonPress(void) {
@@ -55,15 +23,9 @@ static void RecordSideButtonPress(void) {
         lockClickCount = 0;
 
         if (clicks == 2) {
-            PlayDiagnosticFeedback();
+            PostTapFlashAction("com.chr1s.tapflash.toggle-playback");
         } else if (clicks >= 3) {
-            // Execute 3 seconds after the final press, outside the side-button flow.
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.30 * NSEC_PER_SEC)),
-                           dispatch_get_main_queue(), ^{
-                if (generation == lockClickGeneration) {
-                    ToggleFlashlight();
-                }
-            });
+            PostTapFlashAction("com.chr1s.tapflash.toggle-flashlight");
         }
     });
 }
