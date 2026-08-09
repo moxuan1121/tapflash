@@ -10,7 +10,7 @@
 - (void)triplePress:(id)press;
 @end
 
-extern BOOL MRMediaRemoteSendCommand(NSInteger command, NSDictionary *userInfo);
+extern "C" BOOL MRMediaRemoteSendCommand(NSInteger command, NSDictionary *userInfo);
 
 static AVFlashlight *gTapFlashlight = nil;
 
