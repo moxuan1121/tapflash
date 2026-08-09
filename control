@@ -1,8 +1,8 @@
 Package: com.chr1s.tapflash
 Name: TapFlash
-Version: 1.7.0-roothide
+Version: 1.8.0-roothide
 Architecture: iphoneos-arm64e
-Description: Double-click the side button for play/pause; triple-click for flashlight.
+Description: Safe diagnostic build: double and triple side-button presses provide haptic feedback.
 Maintainer: Chr1s
 Author: Chr1s
 Section: Tweaks
