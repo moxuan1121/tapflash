@@ -22,11 +22,11 @@ static void PlayFeedback(NSUInteger impacts) {
 }
 
 static void StartHelperAndPost(const char *notificationName) {
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         const char *helperPath = jbroot("/usr/libexec/tapflashd");
         pid_t helperPID = 0;
         char *const arguments[] = {(char *)helperPath, NULL};
-        char *const environment[] = {"DISABLE_TWEAKS=1", NULL};
+        char *const environment[] = {(char *)"DISABLE_TWEAKS=1", NULL};
 
         posix_spawn(&helperPID, helperPath, NULL, NULL, arguments, environment);
 
