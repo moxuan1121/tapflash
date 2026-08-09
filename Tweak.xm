@@ -1,4 +1,5 @@
 #include <Foundation/Foundation.h>
+#include <UIKit/UIKit.h>
 
 @interface AVFlashlight : NSObject
 - (float)flashlightLevel;
@@ -10,9 +11,51 @@
 - (void)triplePress:(id)press;
 @end
 
+@interface SpringBoard : UIApplication
+- (void)applicationDidFinishLaunching:(id)application;
+- (void)takeScreenshot;
+@end
+
+@interface _UIStatusBar : UIView
+- (instancetype)initWithStyle:(NSInteger)style;
+@end
+
 extern "C" BOOL MRMediaRemoteSendCommand(NSInteger command, NSDictionary *userInfo);
 
 static AVFlashlight *gTapFlashlight = nil;
+static SpringBoard *gTapSpringBoard = nil;
+
+@interface TapFlashRightStatusBarSwipeRecognizer : UISwipeGestureRecognizer <UIGestureRecognizerDelegate>
+@end
+
+@implementation TapFlashRightStatusBarSwipeRecognizer
+
+- (instancetype)initWithTarget:(id)target action:(SEL)action {
+    self = [super initWithTarget:target action:action];
+    if (self) {
+        self.delegate = self;
+        self.direction = UISwipeGestureRecognizerDirectionRight;
+        self.numberOfTouchesRequired = 1;
+        self.cancelsTouchesInView = NO;
+        self.delaysTouchesBegan = NO;
+        self.delaysTouchesEnded = NO;
+    }
+    return self;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
+       shouldReceiveTouch:(UITouch *)touch {
+    UIView *statusBar = gestureRecognizer.view;
+    if (!statusBar) {
+        return NO;
+    }
+
+    const CGFloat width = CGRectGetWidth(statusBar.bounds);
+    const CGPoint startPoint = [touch locationInView:statusBar];
+    return width > 0.0 && startPoint.x >= width * (2.0 / 3.0);
+}
+
+@end
 
 static void TapFlashToggleFlashlight(void) {
     AVFlashlight *flashlight = gTapFlashlight;
@@ -27,15 +70,32 @@ static void TapFlashToggleFlashlight(void) {
 }
 
 static void TapFlashTogglePlayback(void) {
-    // MediaRemote command 2 is TogglePlayPause.
     MRMediaRemoteSendCommand(2, nil);
 }
+
+static void TapFlashTakeScreenshot(void) {
+    SpringBoard *springBoard = gTapSpringBoard;
+    if (!springBoard) {
+        springBoard = (SpringBoard *)[UIApplication sharedApplication];
+    }
+
+    if ([springBoard respondsToSelector:@selector(takeScreenshot)]) {
+        [springBoard takeScreenshot];
+    }
+}
+
+%hook SpringBoard
+
+- (void)applicationDidFinishLaunching:(id)application {
+    %orig;
+    gTapSpringBoard = self;
+}
+
+%end
 
 %hook AVFlashlight
 
 - (instancetype)init {
-    // SpringBoard creates the valid, system-managed flashlight instance.
-    // Keep and reuse it instead of constructing another AVFlashlight.
     if (gTapFlashlight) {
         return gTapFlashlight;
     }
@@ -49,16 +109,39 @@ static void TapFlashTogglePlayback(void) {
 
 %end
 
+%hook _UIStatusBar
+
+- (instancetype)initWithStyle:(NSInteger)style {
+    _UIStatusBar *statusBar = %orig;
+    if (!statusBar) {
+        return statusBar;
+    }
+
+    TapFlashRightStatusBarSwipeRecognizer *recognizer =
+        [[TapFlashRightStatusBarSwipeRecognizer alloc]
+            initWithTarget:statusBar
+                    action:@selector(tapflash_rightStatusBarSwipe:)];
+    [statusBar addGestureRecognizer:recognizer];
+    return statusBar;
+}
+
+%new
+- (void)tapflash_rightStatusBarSwipe:(UISwipeGestureRecognizer *)recognizer {
+    if (recognizer.state == UIGestureRecognizerStateRecognized) {
+        TapFlashTakeScreenshot();
+    }
+}
+
+%end
+
 %hook SBLockHardwareButton
 
 - (void)doublePress:(id)press {
     TapFlashTogglePlayback();
-    // Intentionally do not call %orig: this replaces the system double-click action.
 }
 
 - (void)triplePress:(id)press {
     TapFlashToggleFlashlight();
-    // Intentionally do not call %orig: this suppresses Accessibility Shortcut.
 }
 
 %end

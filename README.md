@@ -4,6 +4,7 @@ RootHide arm64e tweak for iOS 15.
 
 - Double-click the side button to toggle play/pause.
 - Triple-click the side button to toggle the flashlight.
+- Start in the rightmost third of the status bar and swipe right to take a system screenshot.
 - The triple-click replaces the system Accessibility Shortcut action.
 
 ## Required setting

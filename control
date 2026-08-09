@@ -1,8 +1,8 @@
 Package: com.chr1s.tapflash
 Name: TapFlash
-Version: 4.0.0-roothide
+Version: 4.1.0-roothide
 Architecture: iphoneos-arm64e
-Description: Replace Accessibility Shortcut side-button gestures: double-click toggles play/pause and triple-click toggles the flashlight.
+Description: Side-button media and flashlight gestures plus a right-side status-bar swipe for screenshots.
 Maintainer: Chr1s
 Author: Chr1s
 Section: Tweaks
