@@ -1,8 +1,8 @@
 Package: com.chr1s.tapflash
 Name: TapFlash
-Version: 1.9.0-roothide
+Version: 2.0.0-roothide
 Architecture: iphoneos-arm64e
-Description: Safe runtime-profiling build for iOS 15 RootHide.
+Description: Safe side-button diagnostic build with haptic feedback only.
 Maintainer: Chr1s
 Author: Chr1s
 Section: Tweaks
