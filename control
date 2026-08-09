@@ -1,8 +1,8 @@
 Package: com.chr1s.tapflash
 Name: TapFlash
-Version: 3.3.0-roothide
+Version: 4.0.0-roothide
 Architecture: iphoneos-arm64e
-Description: Double-click play/pause and triple-click flashlight through an on-demand RootHide helper.
+Description: Replace Accessibility Shortcut side-button gestures: double-click toggles play/pause and triple-click toggles the flashlight.
 Maintainer: Chr1s
 Author: Chr1s
 Section: Tweaks

@@ -8,17 +8,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = tapflash
 tapflash_FILES = Tweak.xm
 tapflash_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
-
-TOOL_NAME = tapflashd
-tapflashd_FILES = Daemon.m
-tapflashd_FRAMEWORKS = AVFoundation
-tapflashd_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
-tapflashd_CODESIGN_FLAGS = -Stapflashd.entitlements
-tapflashd_INSTALL_PATH = /usr/libexec
+tapflash_FRAMEWORKS = Foundation AVFoundation
+tapflash_PRIVATE_FRAMEWORKS = MediaRemote
 
 include $(THEOS_MAKE_PATH)/tweak.mk
-include $(THEOS_MAKE_PATH)/tool.mk
-
-before-package::
-	chmod 755 $(THEOS_STAGING_DIR)/DEBIAN/postinst
-	chmod 755 $(THEOS_STAGING_DIR)/DEBIAN/prerm

@@ -1,76 +1,64 @@
 #include <Foundation/Foundation.h>
-#include <UIKit/UIKit.h>
-#include <notify.h>
-#include <spawn.h>
-#include <roothide.h>
 
-static NSUInteger lockClickCount = 0;
-static NSUInteger lockClickGeneration = 0;
+@interface AVFlashlight : NSObject
+- (float)flashlightLevel;
+- (void)setFlashlightLevel:(float)level withError:(NSError **)error;
+@end
 
-static void PlayFeedback(NSUInteger impacts) {
-    UIImpactFeedbackGenerator *generator =
-        [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
-    [generator prepare];
-    [generator impactOccurred];
+@interface SBLockHardwareButton : NSObject
+- (void)doublePress:(id)press;
+- (void)triplePress:(id)press;
+@end
 
-    if (impacts > 1) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.12 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            [generator impactOccurred];
-        });
-    }
-}
+extern BOOL MRMediaRemoteSendCommand(NSInteger command, NSDictionary *userInfo);
 
-static void StartHelperAndPost(const char *notificationName) {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        const char *helperPath = jbroot("/usr/libexec/tapflashd");
-        pid_t helperPID = 0;
-        char *const arguments[] = {(char *)helperPath, NULL};
-        char *const environment[] = {(char *)"DISABLE_TWEAKS=1", NULL};
+static AVFlashlight *gTapFlashlight = nil;
 
-        posix_spawn(&helperPID, helperPath, NULL, NULL, arguments, environment);
-
-        // Give a newly spawned helper enough time to register its notify ports.
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.75 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            notify_post(notificationName);
-        });
-    });
-}
-
-static void RecordSideButtonPress(void) {
-    lockClickCount += 1;
-    const NSUInteger generation = ++lockClickGeneration;
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.70 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        if (generation != lockClickGeneration) {
-            return;
-        }
-
-        const NSUInteger clicks = lockClickCount;
-        lockClickCount = 0;
-
-        if (clicks == 2) {
-            PlayFeedback(1);
-            StartHelperAndPost("com.chr1s.tapflash.toggle-playback");
-        } else if (clicks >= 3) {
-            PlayFeedback(2);
-            StartHelperAndPost("com.chr1s.tapflash.toggle-flashlight");
-        }
-    });
-}
-
-%hook SpringBoard
-
-- (BOOL)_handlePhysicalButtonEvent:(UIPressesEvent *)event {
-    UIPress *press = event.allPresses.anyObject;
-
-    if (press && press.type == 104 && press.force > 0.0) {
-        RecordSideButtonPress();
+static void TapFlashToggleFlashlight(void) {
+    AVFlashlight *flashlight = gTapFlashlight;
+    if (!flashlight) {
+        return;
     }
 
-    return %orig;
+    const float currentLevel = [flashlight flashlightLevel];
+    NSError *error = nil;
+    [flashlight setFlashlightLevel:(currentLevel > 0.0f ? 0.0f : 1.0f)
+                         withError:&error];
+}
+
+static void TapFlashTogglePlayback(void) {
+    // MediaRemote command 2 is TogglePlayPause.
+    MRMediaRemoteSendCommand(2, nil);
+}
+
+%hook AVFlashlight
+
+- (instancetype)init {
+    // SpringBoard creates the valid, system-managed flashlight instance.
+    // Keep and reuse it instead of constructing another AVFlashlight.
+    if (gTapFlashlight) {
+        return gTapFlashlight;
+    }
+
+    AVFlashlight *flashlight = %orig;
+    if (flashlight) {
+        gTapFlashlight = flashlight;
+    }
+    return flashlight;
+}
+
+%end
+
+%hook SBLockHardwareButton
+
+- (void)doublePress:(id)press {
+    TapFlashTogglePlayback();
+    // Intentionally do not call %orig: this replaces the system double-click action.
+}
+
+- (void)triplePress:(id)press {
+    TapFlashToggleFlashlight();
+    // Intentionally do not call %orig: this suppresses Accessibility Shortcut.
 }
 
 %end
