@@ -9,4 +9,12 @@ TWEAK_NAME = tapflash
 tapflash_FILES = Tweak.xm
 tapflash_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
 
+TOOL_NAME = tapflashd
+tapflashd_FILES = Daemon.m
+tapflashd_FRAMEWORKS = AVFoundation
+tapflashd_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
+tapflashd_CODESIGN_FLAGS = -Stapflashd.entitlements
+tapflashd_INSTALL_PATH = /usr/libexec
+
 include $(THEOS_MAKE_PATH)/tweak.mk
+include $(THEOS_MAKE_PATH)/tool.mk
