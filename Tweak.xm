@@ -1,12 +1,9 @@
 #include <Foundation/Foundation.h>
 #include <UIKit/UIKit.h>
+#include <dlfcn.h>
 #include <objc/message.h>
 
-typedef NS_ENUM(int, MRCommand) {
-    kMRTogglePlayPause = 2,
-};
-
-extern Boolean MRMediaRemoteSendCommand(MRCommand command, id userInfo);
+typedef BOOL (*MediaRemoteSendCommand)(int command, id userInfo);
 
 static NSUInteger lockClickCount = 0;
 static NSUInteger lockClickGeneration = 0;
@@ -43,7 +40,24 @@ static void ToggleFlashlight(void) {
 
 static void TogglePlayback(void) {
     @try {
-        MRMediaRemoteSendCommand(kMRTogglePlayPause, nil);
+        static BOOL didLookUpMediaRemote = NO;
+        static MediaRemoteSendCommand sendCommand = NULL;
+
+        if (!didLookUpMediaRemote) {
+            didLookUpMediaRemote = YES;
+            void *framework = dlopen(
+                "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote",
+                RTLD_LAZY);
+            if (framework) {
+                sendCommand = (MediaRemoteSendCommand)dlsym(
+                    framework, "MRMediaRemoteSendCommand");
+            }
+        }
+
+        // kMRTogglePlayPause is command 2. A missing framework simply does nothing.
+        if (sendCommand) {
+            sendCommand(2, nil);
+        }
     } @catch (NSException *exception) {
         // Never allow a private API failure to crash SpringBoard.
     }
