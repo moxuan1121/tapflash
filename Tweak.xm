@@ -1,11 +1,6 @@
 #include <Foundation/Foundation.h>
 #include <UIKit/UIKit.h>
-
-@interface SBUIFlashlightController : NSObject
-+ (instancetype)sharedInstance;
-- (NSUInteger)level;
-- (void)setLevel:(NSUInteger)level;
-@end
+#include <objc/message.h>
 
 static NSUInteger lockClickCount = 0;
 static NSUInteger lockClickGeneration = 0;
@@ -19,11 +14,30 @@ static void PlayDiagnosticFeedback(void) {
 
 static void ToggleFlashlight(void) {
     @try {
-        SBUIFlashlightController *controller = [SBUIFlashlightController sharedInstance];
-        const NSUInteger newLevel = controller.level == 0 ? 1 : 0;
-        [controller setLevel:newLevel];
+        Class controllerClass = NSClassFromString(@"SBUIFlashlightController");
+        SEL sharedInstance = NSSelectorFromString(@"sharedInstance");
+        SEL level = NSSelectorFromString(@"level");
+        SEL setLevel = NSSelectorFromString(@"setLevel:");
+
+        if (!controllerClass ||
+            ![(id)controllerClass respondsToSelector:sharedInstance]) {
+            return;
+        }
+
+        id controller = ((id (*)(id, SEL))objc_msgSend)((id)controllerClass, sharedInstance);
+        if (!controller ||
+            ![controller respondsToSelector:level] ||
+            ![controller respondsToSelector:setLevel]) {
+            return;
+        }
+
+        const NSInteger currentLevel =
+            ((NSInteger (*)(id, SEL))objc_msgSend)(controller, level);
+        const NSInteger newLevel = currentLevel == 0 ? 1 : 0;
+
+        ((void (*)(id, SEL, NSInteger))objc_msgSend)(controller, setLevel, newLevel);
     } @catch (NSException *exception) {
-        // The interface and the existing singleton were verified on the device.
+        // The selectors were verified on the target iOS 15.6 device.
     }
 }
 
