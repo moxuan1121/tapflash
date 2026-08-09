@@ -18,3 +18,7 @@ tapflashd_INSTALL_PATH = /usr/libexec
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/tool.mk
+
+before-package::
+	chmod 755 $(THEOS_STAGING_DIR)/DEBIAN/postinst
+	chmod 755 $(THEOS_STAGING_DIR)/DEBIAN/prerm
