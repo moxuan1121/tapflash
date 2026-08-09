@@ -2,35 +2,51 @@
 #include <UIKit/UIKit.h>
 #include <objc/message.h>
 
+typedef NS_ENUM(int, MRCommand) {
+    kMRTogglePlayPause = 2,
+};
+
+extern Boolean MRMediaRemoteSendCommand(MRCommand command, id userInfo);
+
 static NSUInteger lockClickCount = 0;
 static NSUInteger lockClickGeneration = 0;
-
-static id SharedController(NSString *className) {
-    Class controllerClass = NSClassFromString(className);
-    SEL sharedInstance = NSSelectorFromString(@"sharedInstance");
-
-    if (!controllerClass || ![(id)controllerClass respondsToSelector:sharedInstance]) {
-        return nil;
-    }
-
-    return ((id (*)(id, SEL))objc_msgSend)((id)controllerClass, sharedInstance);
-}
-
-static void SendNoArgumentAction(id target, NSString *selectorName) {
-    SEL selector = NSSelectorFromString(selectorName);
-    if (target && [target respondsToSelector:selector]) {
-        ((void (*)(id, SEL))objc_msgSend)(target, selector);
-    }
-}
+static id flashlight = nil;
+static BOOL flashlightEnabled = NO;
 
 static void ToggleFlashlight(void) {
-    SendNoArgumentAction(SharedController(@"SBUIFlashlightController"),
-                         @"toggleFlashlight");
+    @try {
+        if (!flashlight) {
+            Class flashlightClass = NSClassFromString(@"AVFlashlight");
+            if (!flashlightClass) {
+                return;
+            }
+
+            flashlight = [[flashlightClass alloc] init];
+        }
+
+        SEL setLevel = NSSelectorFromString(@"setFlashlightLevel:withError:");
+        if (![flashlight respondsToSelector:setLevel]) {
+            return;
+        }
+
+        const float level = flashlightEnabled ? 0.0f : 1.0f;
+        const BOOL succeeded = ((BOOL (*)(id, SEL, float, NSError **))objc_msgSend)(
+            flashlight, setLevel, level, NULL);
+
+        if (succeeded) {
+            flashlightEnabled = !flashlightEnabled;
+        }
+    } @catch (NSException *exception) {
+        // Never allow a private API failure to crash SpringBoard.
+    }
 }
 
 static void TogglePlayback(void) {
-    SendNoArgumentAction(SharedController(@"SBMediaController"),
-                         @"togglePlayPause");
+    @try {
+        MRMediaRemoteSendCommand(kMRTogglePlayPause, nil);
+    } @catch (NSException *exception) {
+        // Never allow a private API failure to crash SpringBoard.
+    }
 }
 
 static void RecordSideButtonPress(void) {
