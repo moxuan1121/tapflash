@@ -2,10 +2,6 @@
 #include <UIKit/UIKit.h>
 #include <objc/message.h>
 
-@interface SBLockHardwareButtonActions
-- (void)performInitialButtonDownActions;
-@end
-
 static NSUInteger lockClickCount = 0;
 static NSUInteger lockClickGeneration = 0;
 
@@ -37,9 +33,7 @@ static void TogglePlayback(void) {
                          @"togglePlayPause");
 }
 
-// iOS 15 invokes this once for every physical side-button press, before the
-// system resolves whether the sequence is a single, double, or triple click.
-static void RecordLockButtonPress(void) {
+static void RecordSideButtonPress(void) {
     lockClickCount += 1;
     const NSUInteger generation = ++lockClickGeneration;
 
@@ -60,11 +54,17 @@ static void RecordLockButtonPress(void) {
     });
 }
 
-%hook SBLockHardwareButtonActions
+%hook SpringBoard
 
-- (void)performInitialButtonDownActions {
-    %orig;
-    RecordLockButtonPress();
+- (BOOL)_handlePhysicalButtonEvent:(UIPressesEvent *)event {
+    UIPress *press = event.allPresses.anyObject;
+
+    // UIKit type 104 is the side/power button; force 1 means button down.
+    if (press && press.type == 104 && press.force > 0.0) {
+        RecordSideButtonPress();
+    }
+
+    return %orig;
 }
 
 %end
