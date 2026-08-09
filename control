@@ -1,8 +1,8 @@
 Package: com.chr1s.tapflash
 Name: TapFlash
-Version: 2.2.0-roothide
+Version: 2.3.0-roothide
 Architecture: iphoneos-arm64e
-Description: Safe side-button diagnostic build with haptic feedback only.
+Description: Delayed triple-click flashlight test for iOS 15 RootHide; double-click gives haptic feedback.
 Maintainer: Chr1s
 Author: Chr1s
 Section: Tweaks
