@@ -1,12 +1,16 @@
 #import <AVFoundation/AVFoundation.h>
 #import <Foundation/Foundation.h>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <notify.h>
+#include <sys/file.h>
+#include <unistd.h>
 
 typedef BOOL (*MediaRemoteSendCommand)(int command, id userInfo);
 
 static NSString *const kStatusPath =
     @"/var/mobile/Library/Preferences/tapflashd-status.txt";
+static int helperLock = -1;
 
 static void WriteStatus(NSString *message) {
     NSString *line = [NSString stringWithFormat:@"%@\n%@\n",
@@ -77,6 +81,12 @@ static void TogglePlayback(void) {
 
 int main(int argc, char *argv[]) {
     @autoreleasepool {
+        helperLock = open("/var/mobile/Library/Preferences/tapflashd.lock",
+                          O_CREAT | O_RDWR, 0644);
+        if (helperLock < 0 || flock(helperLock, LOCK_EX | LOCK_NB) != 0) {
+            return 0;
+        }
+
         WriteStatus(@"tapflashd started");
 
         dispatch_queue_t queue =
