@@ -21,9 +21,8 @@ static void TapFlashToggleFlashlight(void) {
     }
 
     const float currentLevel = [flashlight flashlightLevel];
-    NSError *error = nil;
     [flashlight setFlashlightLevel:(currentLevel > 0.0f ? 0.0f : 1.0f)
-                         withError:&error];
+                         withError:nil];
 }
 
 static void TapFlashTogglePlayback(void) {
