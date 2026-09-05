@@ -1,6 +1,6 @@
 Package: com.moxuan1121.rightstatusshot
 Name: RightStatusShot
-Version: 0.1.0-roothide
+Version: 0.1.1-roothide
 Architecture: iphoneos-arm64e
 Description: Swipe right within the right third of the status bar for a system screenshot. Experimental.
 Maintainer: moxuan1121

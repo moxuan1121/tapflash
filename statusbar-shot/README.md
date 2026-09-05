@@ -26,4 +26,5 @@
 ## 构建
 
 使用 RootHide Theos：`make clean package FINALPACKAGE=1`。
+arm64e 使用 macOS/Xcode 工具链；不要安装第一轮 Linux 构建的 0.1.0 包。
 边界检查：`cc -std=c11 -Wall -Wextra -Werror test_region.c -o /tmp/rightstatusshot-check && /tmp/rightstatusshot-check`。

@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
       - name: Check region boundaries
@@ -28,6 +28,17 @@ jobs:
         env:
           THEOS: ${{ github.workspace }}/theos
         run: make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=roothide
+      - name: Check modern arm64e ABI
+        working-directory: statusbar-shot
+        run: |
+          python3 - <<'PY'
+          import pathlib, struct
+          binary = pathlib.Path('.theos/obj/arm64e/RightStatusShot.dylib').read_bytes()
+          magic, cpu, subtype = struct.unpack_from('<III', binary)
+          assert magic == 0xfeedfacf and cpu == 0x100000c, 'Expected thin ARM64 Mach-O'
+          assert subtype == 0x80000002, f'Expected modern arm64e ABI, got {subtype:#x}'
+          print('Modern arm64e ABI header verified')
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: rightstatusshot-roothide-arm64e-experimental

@@ -41,6 +41,11 @@ TapFlash 4.1.2 只有 AVFlashlight/init 和 SBLockHardwareButton/doublePress/tri
 
 ## 不能下的结论
 
+第一轮 Linux 云端产物 0.1.0 出现 `incompatible arm64e ABI compiler` 链接警告。
+不推荐安装这个产物。0.1.1 改用 macOS/Xcode 构建，并在上传前检查现代 arm64e ABI 标志。
+依据：https://theos.dev/docs/rootless 、https://theos.dev/docs/arm64e-deployment 。
+此问题是本次发现的构建风险，不等于已经证实上次白苹果的根因。
+
 没有上次白苹果的崩溃日志，不能认定其根因，也不能保证这个版本在设备上稳定。
 异常捕获不处理 EXC_BAD_ACCESS、进程被杀、死锁及 watchdog。
 边界检查只验证区域数学；云端编译只验证编译/链接。屏幕截图、系统手势竞争和锁屏行为仍需设备验证。
