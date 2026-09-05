@@ -1,0 +1,35 @@
+name: Build standalone RightStatusShot
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'statusbar-shot/**'
+      - '.github/workflows/build-statusbar.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check region boundaries
+        working-directory: statusbar-shot
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror test_region.c -o /tmp/rightstatusshot-check
+          /tmp/rightstatusshot-check
+      - name: Install RootHide Theos
+        env:
+          CI: "true"
+          THEOS: ${{ github.workspace }}/theos
+        run: bash -c "$(curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos)"
+      - name: Build standalone package
+        working-directory: statusbar-shot
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=roothide
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rightstatusshot-roothide-arm64e-experimental
+          path: statusbar-shot/packages/*.deb
+          if-no-files-found: error
