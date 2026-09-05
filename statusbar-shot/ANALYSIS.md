@@ -31,7 +31,7 @@ Pro 2.7.6-1 的动作方法名和控制流混淆明显，本次读取了 ObjC �
 
 - 新实现只 hook `_UIStatusBar didMoveToWindow`，不 hook initWithStyle；挂载时保留原方法。
 - 标准 UISwipeGestureRecognizer + 独立 NSObject 代理/target，无手势子类、无新增系统类方法。
-- 以起点位于右侧三分之一区域为条件；原免费版 handler 用识别时的位置比较其可配置区域。
+- 0.1.2 将起点区域扩大为状态栏右半边，覆盖 iPhone 13 Pro Max 刘海右侧旁边的可触摸区域；原免费版 handler 用识别时的位置比较其可配置区域。
 - 从 UIApplication.sharedApplication 获取当前 SpringBoard 对象，不增加启动方法 hook。
 - main queue 异步调用 takeScreenshot；先检查类、方法存在及无参数 void 返回签名。
 - 不移植启动校验、激活、动作流、截图覆盖层或其他手势。

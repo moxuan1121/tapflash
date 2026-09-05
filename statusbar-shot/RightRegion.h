@@ -3,8 +3,8 @@
 #include <math.h>
 
 static inline bool RSSInRightRegion(double x, double y, double width, double height) {
-    // ponytail: fixed right third; use device-specific notch bounds only if needed.
+    // ponytail: the right half includes the usable area immediately beside the notch.
     return isfinite(x) && isfinite(y) && isfinite(width) && isfinite(height) &&
-           width > 0 && height > 0 && x >= width * (2.0 / 3.0) &&
+           width > 0 && height > 0 && x >= width * 0.5 &&
            x < width && y >= 0 && y < height;
 }
