@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check side-button actions
+        run: python3 Tests/check_actions.py
+
       - name: Install RootHide Theos, toolchain, and SDK
         env:
           CI: "true"

@@ -1,4 +1,5 @@
 #include <Foundation/Foundation.h>
+#include <notify.h>
 
 @interface AVFlashlight : NSObject
 - (float)flashlightLevel;
@@ -6,6 +7,7 @@
 @end
 
 @interface SBLockHardwareButton : NSObject
+- (void)longPress:(id)press;
 - (void)doublePress:(id)press;
 - (void)triplePress:(id)press;
 @end
@@ -46,6 +48,10 @@ static void TapFlashTogglePlayback(void) {
 %end
 
 %hook SBLockHardwareButton
+
+- (void)longPress:(id)press {
+    notify_post("com.moxuan.regionshot/AIWindow");
+}
 
 - (void)doublePress:(id)press {
     TapFlashTogglePlayback();
