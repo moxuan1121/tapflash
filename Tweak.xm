@@ -50,7 +50,7 @@ static void TapFlashTogglePlayback(void) {
 %hook SBLockHardwareButton
 
 - (void)longPress:(id)press {
-    notify_post("com.moxuan.regionshot/AIWindow");
+    notify_post("com.moxuan.regionshot/AICamera");
 }
 
 - (void)doublePress:(id)press {
