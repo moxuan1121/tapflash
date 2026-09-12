@@ -1,8 +1,8 @@
 Package: com.chr1s.tapflash
 Name: TapFlash
-Version: 4.1.4-roothide
+Version: 4.1.5-roothide
 Architecture: iphoneos-arm64e
-Description: Long-press the side button for RegionShot AI camera, double-click for play/pause, and triple-click to toggle the flashlight.
+Description: Double-click volume down for RegionShot AI camera, double-click the side button for play/pause, and triple-click it to toggle the flashlight.
 Maintainer: Chr1s
 Author: Chr1s
 Section: Tweaks

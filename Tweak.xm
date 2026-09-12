@@ -7,14 +7,19 @@
 @end
 
 @interface SBLockHardwareButton : NSObject
-- (void)longPress:(id)press;
 - (void)doublePress:(id)press;
 - (void)triplePress:(id)press;
+@end
+
+@interface SBVolumeHardwareButtonActions : NSObject
+- (void)volumeDecreasePressDownWithModifiers:(long long)modifiers;
 @end
 
 extern "C" BOOL MRMediaRemoteSendCommand(NSInteger command, NSDictionary *userInfo);
 
 static AVFlashlight *gTapFlashlight = nil;
+static NSTimeInterval gLastVolumeDownPress;
+static const NSTimeInterval kDoubleVolumeDownThreshold = 1.0;
 
 static void TapFlashToggleFlashlight(void) {
     AVFlashlight *flashlight = gTapFlashlight;
@@ -29,6 +34,16 @@ static void TapFlashToggleFlashlight(void) {
 
 static void TapFlashTogglePlayback(void) {
     MRMediaRemoteSendCommand(2, nil);
+}
+
+static void TapFlashHandleVolumeDownPress(void) {
+    NSTimeInterval now = NSProcessInfo.processInfo.systemUptime;
+    if (gLastVolumeDownPress > 0 && now - gLastVolumeDownPress <= kDoubleVolumeDownThreshold) {
+        gLastVolumeDownPress = 0;
+        notify_post("com.moxuan.regionshot/AICamera");
+        return;
+    }
+    gLastVolumeDownPress = now;
 }
 
 %hook AVFlashlight
@@ -49,16 +64,22 @@ static void TapFlashTogglePlayback(void) {
 
 %hook SBLockHardwareButton
 
-- (void)longPress:(id)press {
-    notify_post("com.moxuan.regionshot/AICamera");
-}
-
 - (void)doublePress:(id)press {
     TapFlashTogglePlayback();
 }
 
 - (void)triplePress:(id)press {
     TapFlashToggleFlashlight();
+}
+
+%end
+
+
+%hook SBVolumeHardwareButtonActions
+
+- (void)volumeDecreasePressDownWithModifiers:(long long)modifiers {
+    %orig;
+    TapFlashHandleVolumeDownPress();
 }
 
 %end
