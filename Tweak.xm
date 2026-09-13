@@ -19,7 +19,10 @@ extern "C" BOOL MRMediaRemoteSendCommand(NSInteger command, NSDictionary *userIn
 
 static AVFlashlight *gTapFlashlight = nil;
 static NSTimeInterval gLastVolumeDownPress;
-static const NSTimeInterval kDoubleVolumeDownThreshold = 1.0;
+static NSUInteger gVolumeDownPressCount;
+static NSUInteger gVolumeDownSequence;
+static const NSTimeInterval kDoubleVolumeDownThreshold = 0.5;
+static const NSTimeInterval kVolumeDownConfirmationDelay = 0.4;
 
 static void TapFlashToggleFlashlight(void) {
     AVFlashlight *flashlight = gTapFlashlight;
@@ -38,12 +41,27 @@ static void TapFlashTogglePlayback(void) {
 
 static void TapFlashHandleVolumeDownPress(void) {
     NSTimeInterval now = NSProcessInfo.processInfo.systemUptime;
-    if (gLastVolumeDownPress > 0 && now - gLastVolumeDownPress <= kDoubleVolumeDownThreshold) {
-        gLastVolumeDownPress = 0;
-        notify_post("com.moxuan.regionshot/AICamera");
+    if (!gVolumeDownPressCount || now - gLastVolumeDownPress > kDoubleVolumeDownThreshold)
+        gVolumeDownPressCount = 0;
+    gLastVolumeDownPress = now;
+    gVolumeDownPressCount++;
+    NSUInteger sequence = ++gVolumeDownSequence;
+
+    if (gVolumeDownPressCount == 2) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kVolumeDownConfirmationDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (sequence != gVolumeDownSequence || gVolumeDownPressCount != 2) return;
+            gVolumeDownPressCount = 0;
+            gLastVolumeDownPress = 0;
+            notify_post("com.moxuan.regionshot/AICamera");
+        });
         return;
     }
-    gLastVolumeDownPress = now;
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kDoubleVolumeDownThreshold * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (sequence != gVolumeDownSequence) return;
+        gVolumeDownPressCount = 0;
+        gLastVolumeDownPress = 0;
+    });
 }
 
 %hook AVFlashlight
