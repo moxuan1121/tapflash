@@ -2,9 +2,8 @@
 
 RootHide arm64e tweak for iOS 15.
 
-- Double-click the side button to toggle play/pause.
+- Double-click the side button to open the RegionShot AI camera.
 - Triple-click the side button to toggle the flashlight.
-- Press volume down twice within 0.5 seconds, without a third press during the following 0.4 seconds, to open the RegionShot AI camera.
 - The triple-click replaces the system Accessibility Shortcut action.
 
 ## Required setting

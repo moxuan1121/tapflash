@@ -9,6 +9,5 @@ TWEAK_NAME = tapflash
 tapflash_FILES = Tweak.xm
 tapflash_CFLAGS = -fobjc-arc
 tapflash_FRAMEWORKS = Foundation AVFoundation
-tapflash_PRIVATE_FRAMEWORKS = MediaRemote
 
 include $(THEOS_MAKE_PATH)/tweak.mk
