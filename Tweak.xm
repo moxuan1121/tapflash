@@ -1,5 +1,6 @@
 #include <Foundation/Foundation.h>
 #include <notify.h>
+#include <dlfcn.h>
 
 @interface AVFlashlight : NSObject
 - (float)flashlightLevel;
@@ -7,47 +8,64 @@
 @end
 
 @interface SBLockHardwareButton : NSObject
+- (id)buttonActions;
 - (void)doublePress:(id)press;
 - (void)triplePress:(id)press;
 @end
 
-static AVFlashlight *gTapFlashlight = nil;
+@interface SBLockHardwareButtonActions : NSObject
+- (BOOL)_usesLockButtonForSecureIntent;
+- (id)_foregroundAppRegisteredForLockButtonEvents;
+@end
 
-static void TapFlashToggleFlashlight(void) {
-    AVFlashlight *flashlight = gTapFlashlight;
-    if (!flashlight) {
-        return;
+static AVFlashlight *gSideButtonFlashlight;
+
+static NSString *SBAActionForPress(NSString *key, NSString *fallback) {
+    NSDictionary *values = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.moxuan.sidebuttonactions.plist"];
+    NSString *value = [values[key] isKindOfClass:NSString.class] ? values[key] : nil;
+    return value.length ? value : fallback;
+}
+
+static BOOL SBA_SystemOwnsDoublePress(SBLockHardwareButton *button) {
+    SBLockHardwareButtonActions *actions = [button buttonActions];
+    if (!actions) return NO;
+    if ([actions respondsToSelector:@selector(_usesLockButtonForSecureIntent)] && [actions _usesLockButtonForSecureIntent]) return YES;
+    if ([actions respondsToSelector:@selector(_foregroundAppRegisteredForLockButtonEvents)] && [actions _foregroundAppRegisteredForLockButtonEvents]) return YES;
+    return NO;
+}
+
+static void SBA_SendAction(NSString *action) {
+    if ([action isEqualToString:@"flashlight"]) {
+        if (!gSideButtonFlashlight) return;
+        [gSideButtonFlashlight setFlashlightLevel:([gSideButtonFlashlight flashlightLevel] > 0.0f ? 0.0f : 1.0f) withError:nil];
+    } else if ([action isEqualToString:@"aiwindow"]) {
+        notify_post("com.moxuan.regionshot/AIWindow");
+    } else if ([action isEqualToString:@"aicamera"]) {
+        notify_post("com.moxuan.regionshot/AICamera");
+    } else if ([action isEqualToString:@"playpause"]) {
+        void (*sendCommand)(int) = (void (*)(int))dlsym(RTLD_DEFAULT, "MRMediaRemoteSendCommand");
+        if (sendCommand) sendCommand(2);
     }
-
-    const float currentLevel = [flashlight flashlightLevel];
-    [flashlight setFlashlightLevel:(currentLevel > 0.0f ? 0.0f : 1.0f)
-                         withError:nil];
 }
 
 %hook AVFlashlight
-
 - (instancetype)init {
-    if (gTapFlashlight) {
-        return gTapFlashlight;
-    }
-
+    if (gSideButtonFlashlight) return gSideButtonFlashlight;
     AVFlashlight *flashlight = %orig;
-    if (flashlight) {
-        gTapFlashlight = flashlight;
-    }
+    if (flashlight) gSideButtonFlashlight = flashlight;
     return flashlight;
 }
-
 %end
 
 %hook SBLockHardwareButton
-
 - (void)doublePress:(id)press {
-    notify_post("com.moxuan.regionshot/AICamera");
+    if (SBA_SystemOwnsDoublePress(self)) {
+        %orig;
+        return;
+    }
+    SBA_SendAction(SBAActionForPress(@"DoublePressAction", @"aicamera"));
 }
-
 - (void)triplePress:(id)press {
-    TapFlashToggleFlashlight();
+    SBA_SendAction(SBAActionForPress(@"TriplePressAction", @"flashlight"));
 }
-
 %end

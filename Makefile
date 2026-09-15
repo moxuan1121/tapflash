@@ -5,9 +5,12 @@ THEOS_PACKAGE_SCHEME = roothide
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = tapflash
-tapflash_FILES = Tweak.xm
-tapflash_CFLAGS = -fobjc-arc
-tapflash_FRAMEWORKS = Foundation AVFoundation
+TWEAK_NAME = SideButtonActions
+SideButtonActions_FILES = Tweak.xm
+SideButtonActions_CFLAGS = -fobjc-arc
+SideButtonActions_FRAMEWORKS = Foundation AVFoundation
 
 include $(THEOS_MAKE_PATH)/tweak.mk
+
+SUBPROJECTS += SideButtonActionsPrefs
+include $(THEOS_MAKE_PATH)/aggregate.mk
