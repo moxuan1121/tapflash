@@ -8,14 +8,8 @@
 @end
 
 @interface SBLockHardwareButton : NSObject
-- (id)buttonActions;
 - (void)doublePress:(id)press;
 - (void)triplePress:(id)press;
-@end
-
-@interface SBLockHardwareButtonActions : NSObject
-- (BOOL)_usesLockButtonForSecureIntent;
-- (id)_foregroundAppRegisteredForLockButtonEvents;
 @end
 
 static AVFlashlight *gSideButtonFlashlight;
@@ -24,14 +18,6 @@ static NSString *SBAActionForPress(NSString *key, NSString *fallback) {
     NSDictionary *values = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.moxuan.sidebuttonactions.plist"];
     NSString *value = [values[key] isKindOfClass:NSString.class] ? values[key] : nil;
     return value.length ? value : fallback;
-}
-
-static BOOL SBA_SystemOwnsDoublePress(SBLockHardwareButton *button) {
-    SBLockHardwareButtonActions *actions = [button buttonActions];
-    if (!actions) return NO;
-    if ([actions respondsToSelector:@selector(_usesLockButtonForSecureIntent)] && [actions _usesLockButtonForSecureIntent]) return YES;
-    if ([actions respondsToSelector:@selector(_foregroundAppRegisteredForLockButtonEvents)] && [actions _foregroundAppRegisteredForLockButtonEvents]) return YES;
-    return NO;
 }
 
 static void SBA_SendAction(NSString *action) {
@@ -59,10 +45,6 @@ static void SBA_SendAction(NSString *action) {
 
 %hook SBLockHardwareButton
 - (void)doublePress:(id)press {
-    if (SBA_SystemOwnsDoublePress(self)) {
-        %orig;
-        return;
-    }
     SBA_SendAction(SBAActionForPress(@"DoublePressAction", @"aicamera"));
 }
 - (void)triplePress:(id)press {
