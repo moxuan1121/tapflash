@@ -14,7 +14,7 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 
 BUNDLE_NAME = SideButtonActionsPrefs
 SideButtonActionsPrefs_FILES = SideButtonActionsPrefs/SBASettingsController.m
-SideButtonActionsPrefs_RESOURCE_DIR = SideButtonActionsPrefs/Resources
+SideButtonActionsPrefs_RESOURCE_DIRS = SideButtonActionsPrefs/Resources
 SideButtonActionsPrefs_FRAMEWORKS = UIKit
 SideButtonActionsPrefs_PRIVATE_FRAMEWORKS = Preferences
 SideButtonActionsPrefs_INSTALL_PATH = /Library/PreferenceBundles
